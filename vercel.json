@@ -1,0 +1,38 @@
+{
+  "version": 2,
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "framework": "vite",
+  "installCommand": "npm install",
+  "devCommand": "npm run dev",
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "X-XSS-Protection",
+          "value": "1; mode=block"
+        }
+      ]
+    }
+  ],
+  "env": {
+    "VITE_SUPABASE_URL": "https://qmzubrrxuhgvphhliery.supabase.co",
+    "VITE_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFtenVicnJ4dWhndnBoaGxpZXJ5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA2NDMzMTQsImV4cCI6MjA3NjIxOTMxNH0.8BsOHVmHC_dVCMvYUm5izMgvUd-YhjR4r9wion6D9nU"
+  }
+}
+
