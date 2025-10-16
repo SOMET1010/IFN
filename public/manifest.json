@@ -1,0 +1,62 @@
+{
+  "name": "AgriMarket - Marché Agricole Ivoirien",
+  "short_name": "AgriMarket",
+  "description": "Le meilleur du marché ivoirien, à portée de main. Découvrez les produits frais de nos producteurs locaux.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#16a34a",
+  "orientation": "portrait",
+  "scope": "/",
+  "lang": "fr-FR",
+  "categories": ["shopping", "food", "agriculture"],
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
+    },
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshots/mobile-home.png",
+      "sizes": "375x667",
+      "type": "image/png",
+      "form_factor": "narrow"
+    },
+    {
+      "src": "/screenshots/desktop-home.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Parcourir le marché",
+      "short_name": "Marché",
+      "description": "Découvrir les produits disponibles",
+      "url": "/marketplace",
+      "icons": [{ "src": "/icons/icon.svg", "sizes": "96x96" }]
+    },
+    {
+      "name": "Mon panier",
+      "short_name": "Panier",
+      "description": "Voir les articles dans mon panier",
+      "url": "/cart",
+      "icons": [{ "src": "/icons/icon.svg", "sizes": "96x96" }]
+    },
+    {
+      "name": "Mes commandes",
+      "short_name": "Commandes",
+      "description": "Suivre mes commandes",
+      "url": "/user/orders",
+      "icons": [{ "src": "/icons/icon.svg", "sizes": "96x96" }]
+    }
+  ]
+}

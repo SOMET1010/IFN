@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+    <meta name="theme-color" content="#16a34a" />
+
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json" />
+
+    <!-- iOS Support -->
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="AgriMarket" />
+    <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
+
+    <!-- Microsoft Tiles -->
+    <meta name="msapplication-TileColor" content="#16a34a" />
+    <meta name="msapplication-config" content="/browserconfig.xml" />
+
+    <!-- Preconnect to external domains -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+    <!-- Preload critical resources -->
+    
+    <title>Inclusion Numérique CI - Plateforme d'économie digitale</title>
+    <meta name="description" content="Projet d'inclusion économique, financière et numérique du secteur informel en Côte d'Ivoire. Connectez producteurs, marchands et coopératives." />
+    <meta name="author" content="ANSUT - Agence Nationale du Service Universel des Télécommunications-TIC" />
+    <meta name="keywords" content="inclusion numérique, économie digitale, Côte d'Ivoire, agriculture, marketplace, coopératives, produits frais, producteurs locaux" />
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="AgriMarket - Marché Agricole Ivoirien" />
+    <meta property="og:description" content="Le meilleur du marché ivoirien, à portée de main. Découvrez les produits frais de nos producteurs locaux." />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://agrimarket.ci" />
+    <meta property="og:locale" content="fr_FR" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:site" content="@agrimarket_ci" />
+    <meta name="twitter:creator" content="@agrimarket_ci" />
+
+    <!-- Additional SEO Meta Tags -->
+    <meta name="robots" content="index, follow" />
+    <meta name="googlebot" content="index, follow" />
+    <meta name="rating" content="general" />
+    <meta name="referrer" content="origin-when-cross-origin" />
+
+    <!-- Security Headers -->
+    <meta http-equiv="X-Content-Type-Options" content="nosniff" />
+    <meta http-equiv="X-XSS-Protection" content="1; mode=block" />
+  </head>
+
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+
+    <!-- Service Worker Registration -->
+    <script>
+      (function () {
+        // Check if we should disable Service Worker (for debugging)
+        const disableSW = new URLSearchParams(window.location.search).has('disable-sw');
+        
+        if ('serviceWorker' in navigator) {
+          if (disableSW) {
+            // Temporarily disable Service Worker for debugging
+            console.log('[SW] Service Worker temporarily disabled for debugging (use ?disable-sw parameter)');
+            
+            // Unregister any existing Service Workers
+            navigator.serviceWorker.getRegistrations?.().then(regs => {
+              regs.forEach(reg => reg.unregister());
+            });
+            
+            // Clear caches
+            if (window.caches?.keys) {
+              caches.keys().then(keys => keys.forEach(key => caches.delete(key))).catch(() => {});
+            }
+          } else {
+            // Register Service Worker normally
+            console.log('[SW] Registering Service Worker...');
+            navigator.serviceWorker.register('/sw.js')
+              .then(registration => {
+                console.log('[SW] Service Worker registered successfully:', registration);
+              })
+              .catch(error => {
+                console.error('[SW] Service Worker registration failed:', error);
+              });
+          }
+        }
+      })();
+    </script>
+  </body>
+</html>
