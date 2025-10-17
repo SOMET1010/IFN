@@ -88,6 +88,9 @@ import SignupVerify from "./pages/auth/SignupVerify";
 import SignupSuccess from "./pages/auth/SignupSuccess";
 import ForgotPassword from "./pages/auth/ForgotPassword";
 import MobileMoneyLogin from "./pages/auth/MobileMoneyLogin";
+import TrainingPage from "./pages/training/TrainingPage";
+import ModulePage from "./pages/training/ModulePage";
+import VideoPlayerPage from "./pages/training/VideoPlayerPage";
 
 const queryClient = new QueryClient();
 
@@ -454,6 +457,11 @@ const App = () => (
                     </ProtectedRoute>
                   } />
                   <Route path="/policies/disputes" element={<DisputePolicies />} />
+
+                  {/* Training Routes */}
+                  <Route path="/training" element={<TrainingPage />} />
+                  <Route path="/training/module/:moduleId" element={<ModulePage />} />
+                  <Route path="/training/video/:videoId" element={<VideoPlayerPage />} />
 
                   {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                   <Route path="*" element={<NotFound />} />
