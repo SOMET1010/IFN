@@ -11,7 +11,13 @@ import {
   Shield,
   Heart,
   CheckCircle2,
-  ChevronDown
+  ChevronDown,
+  Store,
+  Wallet,
+  Package,
+  GraduationCap,
+  CreditCard,
+  Building2
 } from "lucide-react";
 import { AnimatedCounter, AnimatedPercentage, AnimatedMillion } from "@/components/ui/animated-counter";
 import { LiveCounter } from "@/components/ui/live-counter";
@@ -20,66 +26,159 @@ import { ChatWidget } from "@/components/support/ChatWidget";
 const LandingPage = () => {
   const navigate = useNavigate();
 
+  // Statistiques mises à jour selon les documents PDF
   const stats = [
-    { value: 15, label: "Acteurs du secteur", icon: Users, type: "million" },
-    { value: 76, label: "Équipés de mobiles", icon: Smartphone, type: "percent" },
-    { value: 39, label: "Femmes marchandes", icon: Heart, type: "percent" },
-    { value: 88, label: "Inclusion financière", icon: TrendingUp, type: "percent" },
+    { value: 15, label: "Acteurs du secteur informel", icon: Users, type: "million" },
+    { value: 80, label: "Population active informelle", icon: TrendingUp, type: "percent" },
+    { value: 70, label: "Femmes commerçantes", icon: Heart, type: "percent" },
+    { value: 25, label: "Augmentation des revenus", icon: Smartphone, type: "percent", prefix: "+" },
   ];
 
-  const partnerLogos = [
-    { name: "Orange Money", logo: "/pictogrammes/marketplace-icon.png" },
-    { name: "MTN Mobile Money", logo: "/pictogrammes/marketplace-icon.png" },
-    { name: "Moov Money", logo: "/pictogrammes/marketplace-icon.png" },
-    { name: "Wave", logo: "/pictogrammes/marketplace-icon.png" },
+  // Phase pilote
+  const pilotStats = [
+    { value: 1000, label: "Marchands ciblés à Abidjan" },
+    { value: 15, label: "Coopératives en phase pilote" },
+    { value: 60, label: "Taux de bancarisation visé", suffix: "%" },
   ];
 
-  const benefits = [
+  // Les 6 services principaux avec exemples concrets
+  const services = [
     {
-      title: "Marché Virtuel",
-      description: "Accédez à une marketplace inclusive pour vendre et acheter des produits vivriers certifiés IGP",
-      image: "/src/assets/illustrations/hero-marketplace.png",
-      color: "from-orange-500 to-orange-600"
+      icon: Store,
+      title: "Gestion Commerciale",
+      description: "Gérez toutes vos ventes et stocks depuis votre téléphone, recevez des alertes de rupture.",
+      example: "Madame Koné saisit ses ventes d'ignames directement sur son téléphone et reçoit une alerte lorsque son stock descend sous 10kg.",
+      color: "from-blue-500 to-blue-600"
     },
     {
-      title: "Paiements Mobiles",
-      description: "Transactions sécurisées via Orange Money, MTN, Moov et Wave pour une inclusion financière totale",
-      image: "/src/assets/illustrations/mobile-payment.png",
+      icon: Wallet,
+      title: "Paiement Mobile",
+      description: "Acceptez les paiements Orange Money, MTN, Wave et générez automatiquement vos factures.",
+      example: "Monsieur Diallo affiche son QR code, ses clients paient par mobile money et reçoivent un reçu par SMS, sans manipulation d'espèces.",
       color: "from-green-500 to-green-600"
     },
     {
+      icon: Shield,
       title: "Protection Sociale",
-      description: "Cotisations CNPS, CMU et CNAM intégrées pour garantir vos droits sociaux",
-      image: "/src/assets/illustrations/cooperative-dashboard.png",
-      color: "from-blue-500 to-blue-600"
+      description: "Adhérez simplement à la CNPS/CNAM et payez vos cotisations en quelques clics.",
+      example: "Madame Bamba paie 1500 FCFA/mois via la plateforme et bénéficie désormais d'une couverture maladie pour elle et ses enfants.",
+      color: "from-purple-500 to-purple-600"
+    },
+    {
+      icon: Package,
+      title: "Gestion de Stock",
+      description: "Suivez vos stocks en temps réel avec alertes automatiques et historiques.",
+      example: "Suivi digital des stocks, alertes de rupture, réduction de 30% des pertes.",
+      color: "from-orange-500 to-orange-600"
+    },
+    {
+      icon: ShoppingCart,
+      title: "Marché Virtuel",
+      description: "Présentez vos produits en ligne, recevez des commandes et organisez des livraisons groupées.",
+      example: "Les vendeuses du marché d'Adjamé reçoivent des commandes de restaurants et organisent une livraison commune pour réduire les coûts.",
+      color: "from-red-500 to-red-600"
+    },
+    {
+      icon: GraduationCap,
+      title: "Formation Numérique",
+      description: "Accédez à des vidéos et tutoriels pour améliorer vos compétences commerciales et numériques.",
+      example: "Madame Touré regarde des tutoriels en Dioula sur la gestion des stocks pendant les temps calmes de sa journée au marché.",
+      color: "from-indigo-500 to-indigo-600"
     }
   ];
 
-  const testimonials = [
+  // Témoignage authentique du PDF
+  const testimonial = {
+    name: "Aminata K.",
+    role: "Commerçante au marché de Treichville",
+    quote: "Grâce à cette plateforme, j'ai pu régulariser ma situation, accéder à une assurance maladie et obtenir un petit crédit pour développer mon commerce d'attiéké. Mes revenus ont augmenté de 30% en 6 mois.",
+    avatar: "👩🏾"
+  };
+
+  // Bénéfices attendus
+  const benefits = [
     {
-      name: "Aminata Koné",
-      role: "Marchande, Abidjan",
-      quote: "Mes revenus ont augmenté de 45% grâce à la plateforme. Je peux maintenant vendre mes produits à plus de clients.",
-      avatar: "👩🏾"
+      icon: TrendingUp,
+      title: "Inclusion Financière",
+      points: [
+        "Accès facilité aux services bancaires et microfinances",
+        "Paiements et transactions numériques sécurisés",
+        "Taux de bancarisation à 60%"
+      ]
     },
     {
-      name: "Kouassi Yao",
-      role: "Producteur de cacao, Yamoussoukro",
-      quote: "La traçabilité de mes produits m'a permis d'obtenir de meilleurs prix. C'est une révolution pour nous.",
-      avatar: "👨🏾‍🌾"
+      icon: Shield,
+      title: "Protection Sociale",
+      points: [
+        "Accès simplifié à la CNPS et à la Couverture Maladie Universelle",
+        "Sécurisation de l'avenir (retraite, maladie, accident)",
+        "80% des utilisateurs couverts"
+      ]
     },
     {
-      name: "Coopérative N'Zi",
-      role: "Bouaké",
-      quote: "Nous gérons maintenant 120 membres et nos ventes groupées ont triplé en 6 mois.",
-      avatar: "🤝"
+      icon: Smartphone,
+      title: "Modernisation des Pratiques",
+      points: [
+        "Gestion numérique des stocks et ventes",
+        "Traçabilité et accès à de nouveaux marchés",
+        "+40% d'efficacité opérationnelle"
+      ]
     }
   ];
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-white to-orange-50">
+      {/* Bande tricolore ivoirienne en en-tête */}
+      <div className="w-full h-3 flex">
+        <div className="flex-1 bg-[#ff8c00]"></div>
+        <div className="flex-1 bg-white"></div>
+        <div className="flex-1 bg-[#009e60]"></div>
+      </div>
+
+      {/* Header avec logos des institutions */}
+      <header className="bg-white shadow-sm sticky top-0 z-50">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-6">
+              {/* Logos des institutions partenaires */}
+              <div className="flex items-center gap-4 text-sm text-gray-600">
+                <div className="flex items-center gap-2">
+                  <Building2 className="h-6 w-6 text-orange-600" />
+                  <span className="font-semibold">ANSUT</span>
+                </div>
+                <div className="h-6 w-px bg-gray-300"></div>
+                <div className="flex items-center gap-2">
+                  <Building2 className="h-6 w-6 text-green-600" />
+                  <span className="font-semibold">DGE</span>
+                </div>
+                <div className="h-6 w-px bg-gray-300"></div>
+                <div className="flex items-center gap-2">
+                  <Building2 className="h-6 w-6 text-blue-600" />
+                  <span className="font-semibold">MTND</span>
+                </div>
+              </div>
+            </div>
+            <div className="flex gap-4">
+              <Button 
+                variant="outline" 
+                onClick={() => navigate('/login')}
+                className="border-orange-500 text-orange-600 hover:bg-orange-50"
+              >
+                Se connecter
+              </Button>
+              <Button 
+                onClick={() => navigate('/signup/role')}
+                className="bg-gradient-to-r from-orange-500 to-green-600 text-white hover:from-orange-600 hover:to-green-700"
+              >
+                S'inscrire gratuitement
+              </Button>
+            </div>
+          </div>
+        </div>
+      </header>
+
       {/* Hero Section */}
-      <section className="relative overflow-hidden">
+      <section className="relative overflow-hidden bg-gradient-to-br from-orange-50 via-white to-green-50">
         <div className="absolute inset-0 bg-gradient-hero opacity-10"></div>
         <div className="container mx-auto px-4 py-20 relative z-10">
           <div className="grid md:grid-cols-2 gap-12 items-center">
@@ -88,43 +187,36 @@ const LandingPage = () => {
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.8 }}
             >
-              <Badge className="mb-4 bg-orange-500 text-white">
-                Plateforme Officielle ANSUT
+              <Badge className="mb-4 bg-gradient-to-r from-orange-500 to-green-600 text-white border-none">
+                Projet ANSUT - DGE - MTND
               </Badge>
               <h1 className="text-5xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-orange-600 to-green-600 bg-clip-text text-transparent">
-                Un Marché Ouvert, Une Économie Inclusive
+                Plateforme d'Inclusion Numérique
               </h1>
-              <p className="text-xl text-gray-600 mb-8">
-                La super-application qui connecte producteurs, marchands et coopératives 
-                pour une inclusion numérique et sociale en Côte d'Ivoire
+              <p className="text-2xl text-gray-700 mb-4 font-semibold">
+                Transformer le secteur informel vivrier en Côte d'Ivoire
               </p>
-              <div className="flex gap-4 mb-6">
+              <p className="text-lg text-gray-600 mb-8">
+                Une solution innovante pour l'inclusion économique, financière et sociale des acteurs du secteur informel
+              </p>
+              <div className="flex gap-4">
                 <Button 
                   size="lg" 
-                  className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white"
-                  onClick={() => navigate("/auth")}
+                  onClick={() => navigate('/signup/role')}
+                  className="bg-gradient-to-r from-orange-500 to-green-600 text-white hover:from-orange-600 hover:to-green-700 text-lg px-8"
                 >
-                  Commencer Maintenant
+                  Rejoindre la plateforme
+                  <ChevronDown className="ml-2 h-5 w-5" />
                 </Button>
                 <Button 
                   size="lg" 
                   variant="outline"
-                  className="border-green-500 text-green-600 hover:bg-green-50"
+                  onClick={() => navigate('/welcome')}
+                  className="border-2 border-orange-500 text-orange-600 hover:bg-orange-50 text-lg px-8"
                 >
-                  En Savoir Plus
+                  En savoir plus
                 </Button>
               </div>
-              
-              <LiveCounter className="mb-4" />
-              
-              <motion.div
-                className="flex items-center gap-2 text-gray-500 cursor-pointer"
-                animate={{ y: [0, 10, 0] }}
-                transition={{ repeat: Infinity, duration: 1.5 }}
-              >
-                <span className="text-sm">Découvrir plus</span>
-                <ChevronDown className="w-4 h-4" />
-              </motion.div>
             </motion.div>
 
             <motion.div
@@ -133,117 +225,131 @@ const LandingPage = () => {
               transition={{ duration: 0.8, delay: 0.2 }}
               className="relative"
             >
-              <img 
-                src="/src/assets/illustrations/hero-marketplace.png" 
-                alt="Marché ivoirien moderne"
-                className="w-full rounded-2xl shadow-2xl"
-              />
+              <div className="relative rounded-2xl overflow-hidden shadow-2xl bg-white p-8">
+                <img 
+                  src="/src/assets/illustrations/hero-marketplace.png" 
+                  alt="Marché ivoirien" 
+                  className="w-full h-auto rounded-lg"
+                />
+                <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm rounded-lg p-4 shadow-lg">
+                  <div className="text-3xl font-bold text-orange-600">+25%</div>
+                  <div className="text-sm text-gray-600">Revenus en hausse</div>
+                </div>
+              </div>
             </motion.div>
           </div>
         </div>
       </section>
 
-      {/* Stats Section */}
+      {/* Statistiques clés */}
       <section className="py-16 bg-white">
         <div className="container mx-auto px-4">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            viewport={{ once: true }}
+            className="text-center mb-12"
+          >
+            <h2 className="text-4xl font-bold mb-4 bg-gradient-to-r from-orange-600 to-green-600 bg-clip-text text-transparent">
+              Le Contexte : Défis du Secteur Informel Ivoirien
+            </h2>
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+              Les marchés traditionnels sont au cœur de l'économie vivrière mais restent en marge du système formel
+            </p>
+          </motion.div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
             {stats.map((stat, index) => (
               <motion.div
                 key={index}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
-                viewport={{ once: true }}
-                className="text-center"
-              >
-                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-orange-100 to-green-100 mb-4">
-                  <stat.icon className="w-8 h-8 text-orange-600" />
-                </div>
-                <div className="text-4xl font-bold bg-gradient-to-r from-orange-600 to-green-600 bg-clip-text text-transparent mb-2">
-                  {stat.type === "million" && <AnimatedMillion value={stat.value} />}
-                  {stat.type === "percent" && <AnimatedPercentage value={stat.value} />}
-                </div>
-                <div className="text-gray-600">{stat.label}</div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Benefits Section */}
-      <section className="py-20">
-        <div className="container mx-auto px-4">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            viewport={{ once: true }}
-            className="text-center mb-16"
-          >
-            <h2 className="text-4xl font-bold mb-4">Pourquoi Nous Rejoindre ?</h2>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              Une plateforme complète pour transformer le secteur informel ivoirien
-            </p>
-          </motion.div>
-
-          <div className="grid md:grid-cols-3 gap-8">
-            {benefits.map((benefit, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: index * 0.2 }}
+                transition={{ duration: 0.6, delay: index * 0.1 }}
                 viewport={{ once: true }}
               >
-                <Card className="overflow-hidden hover:shadow-xl transition-shadow duration-300 h-full">
-                  <div className={`h-48 bg-gradient-to-br ${benefit.color} flex items-center justify-center`}>
-                    <img 
-                      src={benefit.image} 
-                      alt={benefit.title}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                  <CardContent className="p-6">
-                    <h3 className="text-2xl font-bold mb-3">{benefit.title}</h3>
-                    <p className="text-gray-600">{benefit.description}</p>
+                <Card className="text-center hover:shadow-xl transition-all duration-300 border-t-4 border-orange-500">
+                  <CardContent className="pt-8 pb-6">
+                    <stat.icon className="h-12 w-12 mx-auto mb-4 text-orange-600" />
+                    <div className="text-4xl font-bold mb-2 bg-gradient-to-r from-orange-600 to-green-600 bg-clip-text text-transparent">
+                      {stat.type === "million" ? (
+                        <><AnimatedMillion value={stat.value} />M</>
+                      ) : (
+                        <><AnimatedPercentage value={stat.value} />{stat.prefix || ""}%</>
+                      )}
+                    </div>
+                    <p className="text-gray-600 font-medium">{stat.label}</p>
                   </CardContent>
                 </Card>
               </motion.div>
             ))}
           </div>
+
+          {/* Phase pilote */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            viewport={{ once: true }}
+            className="bg-gradient-to-r from-orange-100 to-green-100 rounded-2xl p-8"
+          >
+            <div className="text-center mb-6">
+              <Badge className="bg-orange-600 text-white text-lg px-6 py-2">
+                Phase Pilote à Abidjan
+              </Badge>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {pilotStats.map((stat, index) => (
+                <div key={index} className="text-center">
+                  <div className="text-5xl font-bold text-orange-600 mb-2">
+                    <AnimatedCounter value={stat.value} />{stat.suffix || ""}
+                  </div>
+                  <p className="text-gray-700 font-medium">{stat.label}</p>
+                </div>
+              ))}
+            </div>
+          </motion.div>
         </div>
       </section>
 
-      {/* Testimonials Section */}
-      <section className="py-20 bg-gradient-to-br from-orange-50 to-green-50">
+      {/* Services concrets */}
+      <section className="py-16 bg-gradient-to-b from-white to-orange-50">
         <div className="container mx-auto px-4">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
             viewport={{ once: true }}
-            className="text-center mb-16"
+            className="text-center mb-12"
           >
-            <h2 className="text-4xl font-bold mb-4">Ils Nous Font Confiance</h2>
-            <p className="text-xl text-gray-600">Des résultats concrets pour nos utilisateurs</p>
+            <h2 className="text-4xl font-bold mb-4 bg-gradient-to-r from-orange-600 to-green-600 bg-clip-text text-transparent">
+              Des Services Concrets pour Changer le Quotidien
+            </h2>
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+              6 services essentiels pour moderniser votre activité commerciale
+            </p>
           </motion.div>
 
-          <div className="grid md:grid-cols-3 gap-8">
-            {testimonials.map((testimonial, index) => (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {services.map((service, index) => (
               <motion.div
                 key={index}
-                initial={{ opacity: 0, scale: 0.9 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: index * 0.1 }}
                 viewport={{ once: true }}
               >
-                <Card className="h-full hover:shadow-lg transition-shadow">
-                  <CardContent className="p-6">
-                    <div className="text-6xl mb-4">{testimonial.avatar}</div>
-                    <p className="text-gray-700 mb-4 italic">"{testimonial.quote}"</p>
-                    <div className="border-t pt-4">
-                      <div className="font-bold text-orange-600">{testimonial.name}</div>
-                      <div className="text-sm text-gray-500">{testimonial.role}</div>
+                <Card className="h-full hover:shadow-2xl transition-all duration-300 border-t-4 border-orange-500 group">
+                  <CardContent className="pt-8 pb-6">
+                    <div className={`w-16 h-16 rounded-full bg-gradient-to-r ${service.color} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
+                      <service.icon className="h-8 w-8 text-white" />
+                    </div>
+                    <h3 className="text-2xl font-bold mb-3 text-gray-800">{service.title}</h3>
+                    <p className="text-gray-600 mb-4 leading-relaxed">{service.description}</p>
+                    <div className="bg-orange-50 rounded-lg p-4 border-l-4 border-orange-500">
+                      <p className="text-sm text-gray-700 italic">
+                        <span className="font-semibold text-orange-600">Exemple concret :</span> {service.example}
+                      </p>
                     </div>
                   </CardContent>
                 </Card>
@@ -253,8 +359,109 @@ const LandingPage = () => {
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="py-20 bg-gradient-to-r from-orange-600 to-green-600 text-white">
+      {/* Témoignage authentique */}
+      <section className="py-16 bg-white">
+        <div className="container mx-auto px-4">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            viewport={{ once: true }}
+            className="max-w-4xl mx-auto"
+          >
+            <Card className="bg-gradient-to-br from-orange-50 to-green-50 border-2 border-orange-200 shadow-2xl">
+              <CardContent className="p-12">
+                <div className="text-6xl mb-6 text-center">{testimonial.avatar}</div>
+                <blockquote className="text-2xl text-gray-700 italic mb-6 text-center leading-relaxed">
+                  "{testimonial.quote}"
+                </blockquote>
+                <div className="text-center">
+                  <p className="font-bold text-xl text-orange-600">{testimonial.name}</p>
+                  <p className="text-gray-600">{testimonial.role}</p>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Bénéfices attendus */}
+      <section className="py-16 bg-gradient-to-b from-white to-orange-50">
+        <div className="container mx-auto px-4">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            viewport={{ once: true }}
+            className="text-center mb-12"
+          >
+            <h2 className="text-4xl font-bold mb-4 bg-gradient-to-r from-orange-600 to-green-600 bg-clip-text text-transparent">
+              Les Bénéfices Attendus
+            </h2>
+            <p className="text-2xl text-gray-700 font-semibold mb-2">
+              Une vie professionnelle modernisée, sécurisée et valorisée
+            </p>
+            <p className="text-xl text-orange-600 font-bold">
+              + de revenus | + de protection | + de reconnaissance
+            </p>
+          </motion.div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+            {benefits.map((benefit, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: index * 0.1 }}
+                viewport={{ once: true }}
+              >
+                <Card className="h-full hover:shadow-xl transition-all duration-300 border-t-4 border-green-500">
+                  <CardContent className="pt-8 pb-6">
+                    <benefit.icon className="h-12 w-12 mb-4 text-green-600" />
+                    <h3 className="text-2xl font-bold mb-4 text-gray-800">{benefit.title}</h3>
+                    <ul className="space-y-3">
+                      {benefit.points.map((point, idx) => (
+                        <li key={idx} className="flex items-start gap-2">
+                          <CheckCircle2 className="h-5 w-5 text-green-600 flex-shrink-0 mt-0.5" />
+                          <span className="text-gray-600">{point}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            ))}
+          </div>
+
+          {/* Impact global */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            viewport={{ once: true }}
+            className="bg-gradient-to-r from-orange-600 to-green-600 rounded-2xl p-12 text-white text-center"
+          >
+            <h3 className="text-3xl font-bold mb-8">Impact Global Attendu</h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              <div>
+                <div className="text-6xl font-bold mb-2">+25%</div>
+                <p className="text-xl">Revenus des marchands</p>
+              </div>
+              <div>
+                <div className="text-6xl font-bold mb-2">x3</div>
+                <p className="text-xl">Accès à la protection sociale</p>
+              </div>
+              <div>
+                <div className="text-6xl font-bold mb-2">70%</div>
+                <p className="text-xl">Bénéficiaires femmes</p>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* CTA Final */}
+      <section className="py-20 bg-white">
         <div className="container mx-auto px-4 text-center">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -262,36 +469,23 @@ const LandingPage = () => {
             transition={{ duration: 0.6 }}
             viewport={{ once: true }}
           >
-            <h2 className="text-4xl font-bold mb-6">
-              Rejoignez la Révolution de l'Inclusion Numérique
+            <h2 className="text-4xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-orange-600 to-green-600 bg-clip-text text-transparent">
+              Rejoignez la Révolution Numérique
             </h2>
-            <p className="text-xl mb-8 max-w-2xl mx-auto opacity-90">
-              Plus de 15 millions d'acteurs du secteur informel vous attendent. 
-              Ensemble, construisons une économie inclusive et prospère.
+            <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
+              Inscrivez-vous gratuitement et transformez votre activité commerciale dès aujourd'hui
             </p>
-            
-            <div className="flex flex-col sm:flex-row gap-6 justify-center items-center mb-8">
-              <div className="flex flex-col items-center gap-2">
-                <img src="/pictogrammes/inscription-gratuite.png" alt="Inscription gratuite" className="w-16 h-16" />
-                <span className="font-semibold">Inscription gratuite</span>
-              </div>
-              <div className="flex flex-col items-center gap-2">
-                <img src="/pictogrammes/paiement-securise.png" alt="Paiements sécurisés" className="w-16 h-16" />
-                <span className="font-semibold">Paiements sécurisés</span>
-              </div>
-              <div className="flex flex-col items-center gap-2">
-                <img src="/pictogrammes/support-24-7.png" alt="Support 24/7" className="w-16 h-16" />
-                <span className="font-semibold">Support 24/7</span>
-              </div>
-            </div>
-
             <Button 
               size="lg" 
-              className="bg-white text-orange-600 hover:bg-gray-100 text-lg px-8 py-6"
-              onClick={() => navigate("/auth")}
+              onClick={() => navigate('/signup/role')}
+              className="bg-gradient-to-r from-orange-500 to-green-600 text-white hover:from-orange-600 hover:to-green-700 text-xl px-12 py-6 h-auto"
             >
-              Créer Mon Compte Gratuitement
+              S'inscrire Gratuitement
+              <ChevronDown className="ml-2 h-6 w-6" />
             </Button>
+            <p className="mt-6 text-gray-500">
+              Inscription en 5 minutes • Support 24/7 • Formation gratuite
+            </p>
           </motion.div>
         </div>
       </section>
@@ -299,46 +493,39 @@ const LandingPage = () => {
       {/* Footer */}
       <footer className="bg-gray-900 text-white py-12">
         <div className="container mx-auto px-4">
-          <div className="grid md:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
             <div>
-              <img src="/src/assets/ivoire-logo.png" alt="Côte d'Ivoire" className="h-12 mb-4" />
-              <p className="text-gray-400">
-                Plateforme officielle d'inclusion numérique de la Côte d'Ivoire
-              </p>
-            </div>
-            <div>
-              <h4 className="font-bold mb-4">Acteurs</h4>
+              <h3 className="text-xl font-bold mb-4">Institutions Partenaires</h3>
               <ul className="space-y-2 text-gray-400">
-                <li>Marchands</li>
-                <li>Producteurs</li>
-                <li>Coopératives</li>
-                <li>Consommateurs</li>
+                <li>ANSUT - Agence Nationale du Service Universel</li>
+                <li>DGE - Direction Générale de l'Emploi</li>
+                <li>MTND - Ministère de la Transition Numérique</li>
               </ul>
             </div>
             <div>
-              <h4 className="font-bold mb-4">Ressources</h4>
+              <h3 className="text-xl font-bold mb-4">Contact</h3>
               <ul className="space-y-2 text-gray-400">
-                <li>Centre d'aide</li>
-                <li>Tutoriels</li>
-                <li>FAQ</li>
-                <li>Contact</li>
+                <li>Téléphone : +225 27 XX XX XX</li>
+                <li>Email : contact@ansut.ci</li>
+                <li>Abidjan, Côte d'Ivoire</li>
               </ul>
             </div>
             <div>
-              <h4 className="font-bold mb-4">Légal</h4>
+              <h3 className="text-xl font-bold mb-4">Liens Rapides</h3>
               <ul className="space-y-2 text-gray-400">
-                <li>Conditions d'utilisation</li>
-                <li>Politique de confidentialité</li>
-                <li>Mentions légales</li>
+                <li><a href="/login" className="hover:text-orange-500">Se connecter</a></li>
+                <li><a href="/signup/role" className="hover:text-orange-500">S'inscrire</a></li>
+                <li><a href="/welcome" className="hover:text-orange-500">En savoir plus</a></li>
               </ul>
             </div>
           </div>
-          <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
-            <p>© 2025 ANSUT - Tous droits réservés</p>
+          <div className="border-t border-gray-800 pt-8 text-center text-gray-400">
+            <p>© 2025 ANSUT - DGE - MTND. Tous droits réservés.</p>
+            <p className="mt-2">Plateforme d'Inclusion Numérique - Côte d'Ivoire</p>
           </div>
         </div>
       </footer>
-      
+
       {/* Chat Widget */}
       <ChatWidget />
     </div>
