@@ -1,5 +1,8 @@
 import { BaseService } from '../baseService';
 import { merchantMockService } from './merchantMockService';
+import { salesService, Sale } from '../supabase/salesService';
+import { inventoryService, InventoryItem } from '../supabase/inventoryService';
+import { supabase } from '../supabase/supabaseClient';
 
 export interface MerchantInventory {
   id: string;
@@ -67,7 +70,7 @@ export interface MerchantStats {
 
 class MerchantService extends BaseService<MerchantInventory> {
   private readonly baseUrl = '/api/merchant';
-  private useMock = true; // Set to false when real API is available
+  private useMock = false; // Using Supabase now
 
   constructor() {
     super('/merchant/inventory', 'merchant_inventory');
@@ -75,27 +78,75 @@ class MerchantService extends BaseService<MerchantInventory> {
 
   async getInventory(): Promise<MerchantInventory[]> {
     if (this.useMock) return merchantMockService.getInventory();
-    const response = await this.getAll();
-    return response.success && response.data ? response.data : [];
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('User not authenticated');
+
+      const items = await inventoryService.getInventory(user.id);
+      return items.map(item => this.mapInventoryItemToMerchantInventory(item));
+    } catch (error) {
+      console.error('Error fetching inventory:', error);
+      return [];
+    }
   }
 
   async addInventoryItem(item: Omit<MerchantInventory, 'id'>): Promise<MerchantInventory> {
     if (this.useMock) return merchantMockService.addInventoryItem(item);
-    const response = await this.create(item);
-    return response.success && response.data ? response.data : Promise.reject('Erreur lors de la création');
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('User not authenticated');
+
+      const newItem = await inventoryService.addInventoryItem({
+        merchant_id: user.id,
+        product_name: item.product,
+        category: item.category,
+        current_stock: item.currentStock,
+        max_stock: item.maxStock,
+        unit: item.unit,
+        location: item.location,
+        expiry_date: item.expiryDate || null,
+        price: item.price,
+        low_threshold_percent: item.lowThresholdPercent || 20,
+        critical_threshold_percent: item.criticalThresholdPercent || 10,
+      });
+
+      return this.mapInventoryItemToMerchantInventory(newItem);
+    } catch (error) {
+      console.error('Error adding inventory item:', error);
+      throw error;
+    }
   }
 
   async updateInventoryItem(id: string, item: Partial<MerchantInventory>): Promise<MerchantInventory> {
     if (this.useMock) return merchantMockService.updateInventoryItem(id, item);
-    const response = await this.update(id, item);
-    return response.success && response.data ? response.data : Promise.reject('Erreur lors de la mise à jour');
+    try {
+      const updates: any = {};
+      if (item.product !== undefined) updates.product_name = item.product;
+      if (item.category !== undefined) updates.category = item.category;
+      if (item.currentStock !== undefined) updates.current_stock = item.currentStock;
+      if (item.maxStock !== undefined) updates.max_stock = item.maxStock;
+      if (item.unit !== undefined) updates.unit = item.unit;
+      if (item.location !== undefined) updates.location = item.location;
+      if (item.expiryDate !== undefined) updates.expiry_date = item.expiryDate || null;
+      if (item.price !== undefined) updates.price = item.price;
+      if (item.lowThresholdPercent !== undefined) updates.low_threshold_percent = item.lowThresholdPercent;
+      if (item.criticalThresholdPercent !== undefined) updates.critical_threshold_percent = item.criticalThresholdPercent;
+
+      const updatedItem = await inventoryService.updateInventoryItem(id, updates);
+      return this.mapInventoryItemToMerchantInventory(updatedItem);
+    } catch (error) {
+      console.error('Error updating inventory item:', error);
+      throw error;
+    }
   }
 
   async deleteInventoryItem(id: string): Promise<void> {
     if (this.useMock) return merchantMockService.deleteInventoryItem(id);
-    const response = await this.delete(id);
-    if (!response.success) {
-      throw new Error('Erreur lors de la suppression');
+    try {
+      await inventoryService.deleteInventoryItem(id);
+    } catch (error) {
+      console.error('Error deleting inventory item:', error);
+      throw error;
     }
   }
 
@@ -122,12 +173,39 @@ class MerchantService extends BaseService<MerchantInventory> {
 
   async getSales(): Promise<MerchantSale[]> {
     if (this.useMock) return merchantMockService.getSales();
-    return [];
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('User not authenticated');
+
+      const sales = await salesService.getSales(user.id);
+      return sales.map(sale => this.mapSaleToMerchantSale(sale));
+    } catch (error) {
+      console.error('Error fetching sales:', error);
+      return [];
+    }
   }
 
   async createSale(sale: Omit<MerchantSale, 'id'>): Promise<MerchantSale> {
     if (this.useMock) return merchantMockService.createSale(sale);
-    throw new Error('Not implemented');
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('User not authenticated');
+
+      const newSale = await salesService.createSale({
+        merchant_id: user.id,
+        client_name: sale.client,
+        products: sale.products,
+        amount: Number(String(sale.amount).replace(/[^0-9.]/g, '')),
+        payment_method: sale.paymentMethod as 'mobile_money' | 'bank_transfer' | 'cash',
+        status: sale.status,
+        sale_date: sale.date,
+      });
+
+      return this.mapSaleToMerchantSale(newSale);
+    } catch (error) {
+      console.error('Error creating sale:', error);
+      throw error;
+    }
   }
 
   async getPayments(): Promise<MerchantPayment[]> {
@@ -142,29 +220,62 @@ class MerchantService extends BaseService<MerchantInventory> {
 
   async getStats(): Promise<MerchantStats> {
     if (this.useMock) return merchantMockService.getStats();
-    return {
-      totalSales: 0,
-      totalRevenue: 0,
-      pendingOrders: 0,
-      lowStockItems: 0,
-      criticalStockItems: 0,
-      monthlyGrowth: 0,
-      activeClients: 0,
-    };
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('User not authenticated');
+
+      const salesStats = await salesService.getSalesStats(user.id);
+      const inventoryStats = await inventoryService.getInventoryStats(user.id);
+
+      return {
+        totalSales: salesStats.totalSales,
+        totalRevenue: salesStats.totalRevenue,
+        pendingOrders: salesStats.salesByStatus.pending,
+        lowStockItems: inventoryStats.stockStatus.low,
+        criticalStockItems: inventoryStats.stockStatus.critical,
+        monthlyGrowth: 0,
+        activeClients: 0,
+      };
+    } catch (error) {
+      console.error('Error fetching stats:', error);
+      return {
+        totalSales: 0,
+        totalRevenue: 0,
+        pendingOrders: 0,
+        lowStockItems: 0,
+        criticalStockItems: 0,
+        monthlyGrowth: 0,
+        activeClients: 0,
+      };
+    }
   }
 
   async getLowStockItems(): Promise<MerchantInventory[]> {
     if (this.useMock) return merchantMockService.getLowStockItems();
-    const response = await this.getAll();
-    if (!response.success || !response.data) return [];
-    return response.data.filter(item => item.status === 'low' || item.status === 'critical');
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('User not authenticated');
+
+      const items = await inventoryService.getLowStockItems(user.id);
+      return items.map(item => this.mapInventoryItemToMerchantInventory(item));
+    } catch (error) {
+      console.error('Error fetching low stock items:', error);
+      return [];
+    }
   }
 
   async getCriticalStockItems(): Promise<MerchantInventory[]> {
     if (this.useMock) return merchantMockService.getCriticalStockItems();
-    const response = await this.getAll();
-    if (!response.success || !response.data) return [];
-    return response.data.filter(item => item.status === 'critical');
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('User not authenticated');
+
+      const items = await inventoryService.getCriticalStockItems(user.id);
+      return items.map(item => this.mapInventoryItemToMerchantInventory(item));
+    } catch (error) {
+      console.error('Error fetching critical stock items:', error);
+      return [];
+    }
   }
 
   async updateStockLevels(items: Array<{ id: string; quantity: number }>): Promise<void> {
@@ -207,6 +318,35 @@ class MerchantService extends BaseService<MerchantInventory> {
   async exportInventory(): Promise<Blob> {
     if (this.useMock) return merchantMockService.exportInventory();
     throw new Error('Not implemented');
+  }
+
+  private mapInventoryItemToMerchantInventory(item: InventoryItem): MerchantInventory {
+    return {
+      id: item.id,
+      product: item.product_name,
+      currentStock: item.current_stock,
+      maxStock: item.max_stock,
+      unit: item.unit,
+      location: item.location,
+      expiryDate: item.expiry_date || '',
+      status: item.status,
+      category: item.category,
+      price: item.price,
+      lowThresholdPercent: item.low_threshold_percent,
+      criticalThresholdPercent: item.critical_threshold_percent,
+    };
+  }
+
+  private mapSaleToMerchantSale(sale: Sale): MerchantSale {
+    return {
+      id: sale.id,
+      client: sale.client_name,
+      products: sale.products,
+      amount: sale.amount.toString(),
+      date: sale.sale_date,
+      status: sale.status,
+      paymentMethod: sale.payment_method,
+    };
   }
 }
 
