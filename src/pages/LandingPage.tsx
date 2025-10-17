@@ -139,7 +139,7 @@ const LandingPage = () => {
       <header className="bg-white shadow-sm sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-6">
+              <div className="flex items-center gap-6">
               {/* Logos des institutions partenaires */}
               <div className="flex items-center gap-4 text-sm text-gray-600">
                 <div className="flex items-center gap-2">
@@ -150,11 +150,6 @@ const LandingPage = () => {
                 <div className="flex items-center gap-2">
                   <Building2 className="h-6 w-6 text-green-600" />
                   <span className="font-semibold">DGE</span>
-                </div>
-                <div className="h-6 w-px bg-gray-300"></div>
-                <div className="flex items-center gap-2">
-                  <Building2 className="h-6 w-6 text-blue-600" />
-                  <span className="font-semibold">MTND</span>
                 </div>
               </div>
             </div>
@@ -188,7 +183,7 @@ const LandingPage = () => {
               transition={{ duration: 0.8 }}
             >
               <Badge className="mb-4 bg-gradient-to-r from-orange-500 to-green-600 text-white border-none">
-                Projet ANSUT - DGE - MTND
+                Projet ANSUT - DGE
               </Badge>
               <h1 className="text-5xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-orange-600 to-green-600 bg-clip-text text-transparent">
                 Plateforme d'Inclusion Numérique
@@ -499,7 +494,6 @@ const LandingPage = () => {
               <ul className="space-y-2 text-gray-400">
                 <li>ANSUT - Agence Nationale du Service Universel</li>
                 <li>DGE - Direction Générale de l'Emploi</li>
-                <li>MTND - Ministère de la Transition Numérique</li>
               </ul>
             </div>
             <div>
@@ -520,7 +514,7 @@ const LandingPage = () => {
             </div>
           </div>
           <div className="border-t border-gray-800 pt-8 text-center text-gray-400">
-            <p>© 2025 ANSUT - DGE - MTND. Tous droits réservés.</p>
+            <p>© 2025 ANSUT - DGE. Tous droits réservés.</p>
             <p className="mt-2">Plateforme d'Inclusion Numérique - Côte d'Ivoire</p>
           </div>
         </div>
