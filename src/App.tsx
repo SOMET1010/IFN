@@ -39,6 +39,8 @@ import MerchantSalesWorkflow from "./pages/merchant/MerchantSalesWorkflow";
 import MerchantNeeds from "./pages/merchant/MerchantNeeds";
 import MerchantProfile from "./pages/merchant/MerchantProfile";
 import MerchantSettings from "./pages/merchant/MerchantSettings";
+import MerchantMobileMoneyDemo from "./pages/merchant/MerchantMobileMoneyDemo";
+import MerchantTransactions from "./pages/merchant/MerchantTransactions";
 import CooperativeDashboard from "./pages/cooperative/CooperativeDashboard";
 import CooperativeDashboardNew from "./pages/CooperativeDashboard";
 import CooperativeOrders from "./pages/cooperative/CooperativeOrders";
@@ -246,6 +248,16 @@ const App = () => (
                   <Route path="/merchant/settings" element={
                     <ProtectedRoute requiredRoles={['merchant']}>
                       <MerchantSettings />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/merchant/mobile-money-demo" element={
+                    <ProtectedRoute requiredRoles={['merchant']}>
+                      <MerchantMobileMoneyDemo />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/merchant/transactions" element={
+                    <ProtectedRoute requiredRoles={['merchant']}>
+                      <MerchantTransactions />
                     </ProtectedRoute>
                   } />
 
