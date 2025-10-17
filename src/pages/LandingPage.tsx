@@ -141,16 +141,18 @@ const LandingPage = () => {
           <div className="flex items-center justify-between">
               <div className="flex items-center gap-6">
               {/* Logos des institutions partenaires */}
-              <div className="flex items-center gap-4 text-sm text-gray-600">
-                <div className="flex items-center gap-2">
-                  <Building2 className="h-6 w-6 text-orange-600" />
-                  <span className="font-semibold">ANSUT</span>
-                </div>
-                <div className="h-6 w-px bg-gray-300"></div>
-                <div className="flex items-center gap-2">
-                  <Building2 className="h-6 w-6 text-green-600" />
-                  <span className="font-semibold">DGE</span>
-                </div>
+              <div className="flex items-center gap-6">
+                <img 
+                  src="/logos/ansut-logo.png" 
+                  alt="ANSUT" 
+                  className="h-12 w-auto"
+                />
+                <div className="h-8 w-px bg-gray-300"></div>
+                <img 
+                  src="/logos/dge-logo.png" 
+                  alt="DGE" 
+                  className="h-12 w-auto"
+                />
               </div>
             </div>
             <div className="flex gap-4">
