@@ -405,9 +405,9 @@ const Welcome = () => {
                 variants={containerVariants}
               >
                 {[
-                  { label: "Inclusion financière", value: 88, desc: "Accès aux services bancaires" },
-                  { label: "Protection sociale", value: 92, desc: "Couverture et sécurité sociale" },
-                  { label: "Traçabilité", value: 95, desc: "Transactions et opérations" }
+                  { label: "Secteur informel", value: 80, desc: "Population active concernée" },
+                  { label: "Femmes commerçantes", value: 70, desc: "Bénéficiaires prioritaires" },
+                  { label: "Augmentation revenus", value: 25, desc: "Impact attendu sur les revenus" }
                 ].map((metric, index) => (
                   <motion.div
                     key={metric.label}
