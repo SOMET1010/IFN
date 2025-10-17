@@ -1,5 +1,12 @@
-// In local development, immediately unregister the Service Worker to avoid
-// stale assets and HMR websocket interference.
+// Service Worker pour Mode Offline - AgriMarket PWA
+// Version: 3.0.0
+
+const CACHE_VERSION = 'v3.0.0';
+const CACHE_NAME = `agrimarket-${CACHE_VERSION}`;
+const DATA_CACHE = `agrimarket-data-${CACHE_VERSION}`;
+const IMAGE_CACHE = `agrimarket-images-${CACHE_VERSION}`;
+
+// Détection environnement local
 const __HOSTNAME__ = self.location.hostname;
 const IS_LOCAL_DEV = (
   ['localhost', '127.0.0.1', '::1', '0.0.0.0'].includes(__HOSTNAME__) ||
@@ -8,246 +15,260 @@ const IS_LOCAL_DEV = (
   /^172\.(1[6-9]|2[0-9]|3[0-1])\./.test(__HOSTNAME__)
 );
 
+// En développement, désactiver le Service Worker
 if (IS_LOCAL_DEV) {
-  // Ensure the newest worker takes control, then unregister and clear caches
-  self.addEventListener('install', (event) => {
-    self.skipWaiting();
-  });
+  self.addEventListener('install', () => self.skipWaiting());
   self.addEventListener('activate', (event) => {
     event.waitUntil((async () => {
-      try {
-        const keys = await caches.keys();
-        await Promise.all(keys.map((k) => caches.delete(k)));
-      } catch {}
-      try {
-        await self.registration.unregister();
-      } catch {}
-      try {
-        const clientList = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
-        clientList.forEach((client) => client.navigate(client.url));
-      } catch {}
+      const keys = await caches.keys();
+      await Promise.all(keys.map((k) => caches.delete(k)));
+      await self.registration.unregister();
+      const clients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+      clients.forEach((client) => client.navigate(client.url));
     })());
   });
-  // Stop here for dev; do not register caching handlers
-}
+} else {
+  // Mode Production - Cache complet
 
-const CACHE_NAME = 'agrimarket-v2';
-const STATIC_CACHE = `${CACHE_NAME}-static`;
-const DATA_CACHE = `${CACHE_NAME}-data`;
+  // Assets statiques à mettre en cache
+  const STATIC_ASSETS = [
+    '/',
+    '/index.html',
+    '/manifest.json',
+    '/favicon.ico',
+    '/robots.txt',
+    '/placeholder.svg'
+  ];
 
-// Static assets to cache
-const STATIC_ASSETS = [
-  '/',
-  '/manifest.json',
-  '/favicon.ico'
-];
+  // Routes API à ne PAS mettre en cache (toujours fetch)
+  const NO_CACHE_PATTERNS = [
+    /\/api\//,
+    /supabase\.co/,
+    /\.hot-update\./
+  ];
 
-// Install event
-self.addEventListener('install', (event) => {
-  console.log('Service Worker installing...');
-  event.waitUntil(
-    caches.open(STATIC_CACHE)
-      .then((cache) => {
-        console.log('Service Worker caching static assets');
-        return cache.addAll(STATIC_ASSETS);
-      })
-      .then(() => self.skipWaiting())
-  );
-});
+  // Installation du Service Worker
+  self.addEventListener('install', (event) => {
+    console.log('[SW] Installing version', CACHE_VERSION);
 
-// Activate event
-self.addEventListener('activate', (event) => {
-  console.log('Service Worker activating...');
-  event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames.map((cacheName) => {
-          if (cacheName !== STATIC_CACHE && cacheName !== DATA_CACHE) {
-            console.log('Service Worker clearing old cache:', cacheName);
-            return caches.delete(cacheName);
-          }
+    event.waitUntil(
+      caches.open(CACHE_NAME)
+        .then((cache) => {
+          console.log('[SW] Caching static assets');
+          return cache.addAll(STATIC_ASSETS);
         })
-      );
-    })
-  );
-  return self.clients.claim();
-});
+        .then(() => self.skipWaiting())
+    );
+  });
 
-// Fetch event
-self.addEventListener('fetch', (event) => {
-  const url = new URL(event.request.url);
+  // Activation et nettoyage des anciens caches
+  self.addEventListener('activate', (event) => {
+    console.log('[SW] Activating version', CACHE_VERSION);
 
-  // Handle static assets
-  if (event.request.method === 'GET') {
-    // Try static cache first
-    event.respondWith(
-      caches.match(event.request)
-        .then((cachedResponse) => {
-          if (cachedResponse) {
-            return cachedResponse;
-          }
-
-          // For API requests, use network-first strategy
-          if (url.pathname.startsWith('/api/')) {
-            return fetch(event.request)
-              .then((response) => {
-                // Clone the response
-                const responseToCache = response.clone();
-
-                // Cache successful API responses, but exclude chrome-extension requests
-                if (response.status === 200 && !event.request.url.startsWith('chrome-extension://')) {
-                  caches.open(DATA_CACHE)
-                    .then((cache) => {
-                      cache.put(event.request, responseToCache);
-                    });
-                }
-
-                return response;
+    event.waitUntil(
+      caches.keys()
+        .then((cacheNames) => {
+          return Promise.all(
+            cacheNames
+              .filter((name) => {
+                return name.startsWith('agrimarket-') && name !== CACHE_NAME && name !== DATA_CACHE && name !== IMAGE_CACHE;
               })
-              .catch(() => {
-                // If offline, try to return cached data
-                return caches.match(event.request);
-              });
-          }
-
-          // For other requests, use cache-first strategy
-          return fetch(event.request)
-            .then((response) => {
-              // Cache successful responses, but exclude chrome-extension requests
-              if (response.status === 200 && !event.request.url.startsWith('chrome-extension://')) {
-                const responseToCache = response.clone();
-                caches.open(STATIC_CACHE)
-                  .then((cache) => {
-                    cache.put(event.request, responseToCache);
-                  });
-              }
-              return response;
-            })
-            .catch(() => {
-              // Return offline page for HTML requests
-              if (event.request.headers.get('accept')?.includes('text/html')) {
-                return caches.match('/offline');
-              }
-            });
+              .map((name) => {
+                console.log('[SW] Deleting old cache:', name);
+                return caches.delete(name);
+              })
+          );
         })
+        .then(() => self.clients.claim())
     );
+  });
+
+  // Stratégie de récupération des ressources
+  self.addEventListener('fetch', (event) => {
+    const { request } = event;
+    const url = new URL(request.url);
+
+    // Ignorer les requêtes non-GET
+    if (request.method !== 'GET') {
+      return;
+    }
+
+    // Ignorer les patterns à ne pas mettre en cache
+    if (NO_CACHE_PATTERNS.some(pattern => pattern.test(url.href))) {
+      event.respondWith(fetch(request));
+      return;
+    }
+
+    // Stratégie selon le type de ressource
+    if (request.destination === 'image') {
+      event.respondWith(cacheFirstStrategy(request, IMAGE_CACHE));
+    } else if (url.pathname.startsWith('/api/') || url.hostname.includes('supabase')) {
+      event.respondWith(networkFirstStrategy(request, DATA_CACHE));
+    } else if (STATIC_ASSETS.includes(url.pathname) || request.destination === 'script' || request.destination === 'style') {
+      event.respondWith(cacheFirstStrategy(request, CACHE_NAME));
+    } else {
+      event.respondWith(staleWhileRevalidateStrategy(request, CACHE_NAME));
+    }
+  });
+
+  // Stratégie Cache First (pour assets statiques et images)
+  async function cacheFirstStrategy(request, cacheName) {
+    try {
+      const cache = await caches.open(cacheName);
+      const cached = await cache.match(request);
+
+      if (cached) {
+        return cached;
+      }
+
+      const response = await fetch(request);
+
+      if (response.ok) {
+        cache.put(request, response.clone());
+      }
+
+      return response;
+    } catch (error) {
+      console.error('[SW] Cache first error:', error);
+      const cache = await caches.open(cacheName);
+      const cached = await cache.match(request);
+      return cached || new Response('Offline', { status: 503 });
+    }
   }
-});
 
-// Background sync for offline actions
-self.addEventListener('sync', (event) => {
-  console.log('Service Worker handling background sync:', event.tag);
+  // Stratégie Network First (pour API/données)
+  async function networkFirstStrategy(request, cacheName) {
+    try {
+      const response = await fetch(request);
 
-  if (event.tag === 'sync-cart') {
-    event.waitUntil(
-      // Sync cart items
-      syncCartItems()
-    );
+      if (response.ok) {
+        const cache = await caches.open(cacheName);
+        cache.put(request, response.clone());
+      }
+
+      return response;
+    } catch (error) {
+      console.log('[SW] Network first fallback to cache');
+      const cache = await caches.open(cacheName);
+      const cached = await cache.match(request);
+
+      if (cached) {
+        return cached;
+      }
+
+      return new Response(JSON.stringify({
+        error: 'Offline',
+        message: 'Vous êtes hors ligne. Certaines données peuvent être obsolètes.'
+      }), {
+        status: 503,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
   }
 
-  if (event.tag === 'sync-orders') {
-    event.waitUntil(
-      // Sync orders
-      syncOrders()
-    );
-  }
-});
+  // Stratégie Stale While Revalidate (pour pages HTML)
+  async function staleWhileRevalidateStrategy(request, cacheName) {
+    const cache = await caches.open(cacheName);
+    const cached = await cache.match(request);
 
-// Push notifications
-self.addEventListener('push', (event) => {
-  console.log('Service Worker received push event');
-
-  if (event.data) {
-    const data = event.data.json();
-
-    const options = {
-      body: data.message,
-      icon: '/favicon.ico',
-      badge: '/favicon.ico',
-      tag: data.tag || 'default',
-      data: {
-        url: data.action_url || '/'
-      },
-      actions: [
-        {
-          action: 'view',
-          title: 'Voir',
-          icon: '/favicon.ico'
-        },
-        {
-          action: 'dismiss',
-          title: 'Ignorer',
-          icon: '/favicon.ico'
+    const fetchPromise = fetch(request)
+      .then((response) => {
+        if (response.ok) {
+          cache.put(request, response.clone());
         }
-      ]
+        return response;
+      })
+      .catch(() => cached);
+
+    return cached || fetchPromise;
+  }
+
+  // Gestion des messages du client
+  self.addEventListener('message', (event) => {
+    if (event.data && event.data.type === 'SKIP_WAITING') {
+      self.skipWaiting();
+    }
+
+    if (event.data && event.data.type === 'CACHE_URLS') {
+      const { urls } = event.data;
+      event.waitUntil(
+        caches.open(CACHE_NAME)
+          .then((cache) => cache.addAll(urls))
+      );
+    }
+
+    if (event.data && event.data.type === 'CLEAR_CACHE') {
+      event.waitUntil(
+        caches.keys()
+          .then((names) => Promise.all(names.map((name) => caches.delete(name))))
+      );
+    }
+  });
+
+  // Synchronisation en arrière-plan (Background Sync)
+  self.addEventListener('sync', (event) => {
+    console.log('[SW] Background sync:', event.tag);
+
+    if (event.tag === 'sync-data') {
+      event.waitUntil(syncData());
+    }
+  });
+
+  async function syncData() {
+    try {
+      // Récupérer les données en attente de synchronisation depuis IndexedDB
+      // (À implémenter avec la logique métier spécifique)
+      console.log('[SW] Synchronizing data...');
+
+      // Simuler une synchronisation réussie
+      return Promise.resolve();
+    } catch (error) {
+      console.error('[SW] Sync failed:', error);
+      throw error;
+    }
+  }
+
+  // Notifications Push (si activées)
+  self.addEventListener('push', (event) => {
+    const data = event.data ? event.data.json() : {};
+    const title = data.title || 'AgriMarket';
+    const options = {
+      body: data.body || 'Vous avez une nouvelle notification',
+      icon: '/icons/icon.svg',
+      badge: '/icons/icon.svg',
+      data: data.url || '/',
+      tag: data.tag || 'default',
+      requireInteraction: false
     };
 
     event.waitUntil(
-      self.registration.showNotification(data.title, options)
+      self.registration.showNotification(title, options)
     );
-  }
-});
+  });
 
-// Handle notification clicks
-self.addEventListener('notificationclick', (event) => {
-  console.log('Service Worker notification clicked');
+  // Clic sur notification
+  self.addEventListener('notificationclick', (event) => {
+    event.notification.close();
 
-  event.notification.close();
-
-  if (event.action === 'view') {
-    const url = event.notification.data.url;
     event.waitUntil(
-      clients.openWindow(url)
-    );
-  }
-});
+      self.clients.matchAll({ type: 'window', includeUncontrolled: true })
+        .then((clientList) => {
+          const url = event.notification.data || '/';
 
-// Helper functions
-async function syncCartItems() {
-  // Get pending cart items from IndexedDB
-  // Send to server
-  // Clear pending items
-  console.log('Syncing cart items...');
-}
+          // Si une fenêtre est déjà ouverte, la focus
+          for (const client of clientList) {
+            if (client.url === url && 'focus' in client) {
+              return client.focus();
+            }
+          }
 
-async function syncOrders() {
-  // Get pending orders from IndexedDB
-  // Send to server
-  // Update order status
-  console.log('Syncing orders...');
-}
-
-// Clean up old caches periodically
-self.addEventListener('message', (event) => {
-  if (event.data === 'clean-up') {
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames.map((cacheName) => {
-          if (cacheName.startsWith(CACHE_NAME)) {
-            return caches.open(cacheName).then((cache) => {
-              return cache.keys().then((requests) => {
-                return Promise.all(
-                  requests.map((request) => {
-                    // Remove items older than 7 days
-                    const url = new URL(request.url);
-                    if (url.pathname.includes('/api/')) {
-                      const date = new Date(request.headers.get('date') || Date.now());
-                      const now = new Date();
-                      const diffTime = Math.abs(now.getTime() - date.getTime());
-                      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-                      if (diffDays > 7) {
-                        return cache.delete(request);
-                      }
-                    }
-                    return Promise.resolve();
-                  })
-                );
-              });
-            });
+          // Sinon, ouvrir une nouvelle fenêtre
+          if (self.clients.openWindow) {
+            return self.clients.openWindow(url);
           }
         })
-      );
-    });
-  }
-});
+    );
+  });
+
+  console.log('[SW] Service Worker version', CACHE_VERSION, 'loaded');
+}
