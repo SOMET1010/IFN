@@ -143,7 +143,7 @@ const LandingPage = () => {
               {/* Logos des institutions partenaires */}
               <div className="flex items-center gap-8">
                 <img
-                  src="/logos/ansut-logo.png"
+                  src="/logos/LOGO ANSUT.jpg"
                   alt="ANSUT"
                   className="h-20 w-auto object-contain"
                 />
