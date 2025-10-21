@@ -91,6 +91,9 @@ import SignupVerify from "./pages/auth/SignupVerify";
 import SignupSuccess from "./pages/auth/SignupSuccess";
 import ForgotPassword from "./pages/auth/ForgotPassword";
 import MobileMoneyLogin from "./pages/auth/MobileMoneyLogin";
+import SimplifiedSignup from "./pages/auth/SimplifiedSignup";
+import SimplifiedLogin from "./pages/auth/SimplifiedLogin";
+import SimplifiedSettings from "./pages/user/SimplifiedSettings";
 import TrainingPage from "./pages/training/TrainingPage";
 import ModulePage from "./pages/training/ModulePage";
 import VideoPlayerPage from "./pages/training/VideoPlayerPage";
@@ -122,14 +125,23 @@ const App = () => (
                   <Route path="/welcome" element={<Welcome />} />
                   <Route path="/welcome-alt" element={<WelcomeAlt />} />
                   <Route path="/login" element={<Login />} />
+                  <Route path="/login/simplified" element={<SimplifiedLogin />} />
                   <Route path="/forgot-password" element={<ForgotPassword />} />
                   <Route path="/login/mobile-money" element={<MobileMoneyLogin />} />
 
                   {/* Signup Routes */}
                   <Route path="/signup/role" element={<SignupRole />} />
                   <Route path="/signup/details" element={<SignupDetails />} />
+                  <Route path="/signup/simplified" element={<SimplifiedSignup />} />
                   <Route path="/signup/verify" element={<SignupVerify />} />
                   <Route path="/signup/success" element={<SignupSuccess />} />
+
+                  {/* Simplified User Routes */}
+                  <Route path="/user/settings/simplified" element={
+                    <ProtectedRoute>
+                      <SimplifiedSettings />
+                    </ProtectedRoute>
+                  } />
 
                   {/* Dashboard Route */}
                   <Route path="/dashboard" element={
