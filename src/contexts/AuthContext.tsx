@@ -2,10 +2,12 @@ import * as React from 'react';
 import { User } from '@/types';
 import { SupabaseAuthService, AuthError, AuthResult, SignupData } from '@/services/supabase/authService';
 import { supabase } from '@/services/supabase/supabaseClient';
+import { socialAuthService } from '@/services/auth/socialAuthService';
 
 interface AuthContextType {
   user: User | null;
   login: (email: string, password: string, rememberMe?: boolean) => Promise<boolean>;
+  loginWithMobileMoney: (sessionId: string, otp: string) => Promise<boolean>;
   signup: (data: SignupData) => Promise<AuthResult>;
   logout: () => Promise<void>;
   isLoading: boolean;
@@ -190,6 +192,42 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const loginWithMobileMoney = async (sessionId: string, otp: string): Promise<boolean> => {
+    setState(prev => ({ ...prev, isLoading: true, error: null }));
+
+    try {
+      const result = await socialAuthService.verifyMobileMoneyOTP(sessionId, otp);
+
+      if (result.success && result.userId) {
+        const currentUser = await SupabaseAuthService.getCurrentUser();
+        if (currentUser) {
+          setState(prev => ({
+            ...prev,
+            user: currentUser,
+            isLoading: false,
+          }));
+          return true;
+        }
+      }
+
+      setState(prev => ({
+        ...prev,
+        error: new AuthError(result.error || 'Erreur de connexion Mobile Money', 'MOBILE_MONEY_ERROR'),
+        isLoading: false,
+      }));
+      return false;
+
+    } catch (error) {
+      console.error('Mobile Money login error:', error);
+      setState(prev => ({
+        ...prev,
+        error: new AuthError('Une erreur inattendue est survenue', 'UNKNOWN_ERROR'),
+        isLoading: false,
+      }));
+      return false;
+    }
+  };
+
   const signup = async (data: SignupData): Promise<AuthResult> => {
     setState(prev => ({ ...prev, isLoading: true, error: null }));
 
@@ -340,6 +378,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const value = React.useMemo(() => ({
     user: state.user,
     login,
+    loginWithMobileMoney,
     signup,
     logout,
     isLoading: state.isLoading,
@@ -359,6 +398,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     state.requiresProfile,
     state.requiresVerification,
     login,
+    loginWithMobileMoney,
     signup,
     logout,
     clearError,
