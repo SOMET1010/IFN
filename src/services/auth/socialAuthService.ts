@@ -4,6 +4,7 @@
  */
 
 import { supabase } from '../supabase/supabaseClient';
+import { twilioSMSService } from '../sms/twilioService';
 
 export interface SocialAuthProvider {
   id: 'google' | 'facebook' | 'mobile_money' | 'whatsapp';
@@ -103,11 +104,11 @@ export class SocialAuthService {
         };
       }
 
-      // Génération d'un code OTP (à envoyer via SMS en production)
+      // Génération d'un code OTP
       const otp = this.generateOTP();
       const sessionId = this.generateSessionId();
 
-      // Stocker temporairement dans le localStorage (en production, utiliser un backend)
+      // Stocker temporairement dans le localStorage
       const session = {
         phoneNumber,
         operator,
@@ -118,12 +119,33 @@ export class SocialAuthService {
 
       localStorage.setItem(`mm_auth_${sessionId}`, JSON.stringify(session));
 
-      // En production, envoyer le SMS via l'API de l'opérateur
-      console.log(`OTP envoyé au ${phoneNumber}: ${otp}`);
+      // Envoyer le SMS via Twilio
+      const smsResult = await twilioSMSService.sendOTP(
+        phoneNumber,
+        otp,
+        operator as 'orange' | 'mtn' | 'moov'
+      );
+
+      if (!smsResult.success) {
+        console.error('Erreur envoi SMS:', smsResult.error);
+        // En mode développement, afficher l'OTP dans la console
+        if (import.meta.env.DEV) {
+          console.log(`[DEV MODE] OTP pour ${phoneNumber}: ${otp}`);
+        }
+        // Ne pas bloquer l'authentification si l'envoi SMS échoue
+        // L'utilisateur peut toujours utiliser l'OTP affiché en dev
+      } else {
+        console.log(`SMS OTP envoyé avec succès à ${phoneNumber} (SID: ${smsResult.messageSid})`);
+      }
+
+      // En mode développement, toujours afficher l'OTP dans la console
+      if (import.meta.env.DEV) {
+        console.log(`[DEV MODE] OTP pour ${phoneNumber}: ${otp}`);
+      }
 
       return {
         success: true,
-        otpSent: true,
+        otpSent: smsResult.success,
         sessionId
       };
     } catch (error) {
