@@ -62,7 +62,7 @@ export interface SupabaseSession {
 
 export interface DatabaseUser {
   id: string;
-  email: string;
+  email: string | null;
   name: string;
   role: 'merchant' | 'producer' | 'cooperative' | 'admin';
   status: 'pending' | 'active' | 'suspended';
@@ -98,15 +98,24 @@ export const authHelpers = {
   // Créer un utilisateur dans la base de données
   async createDatabaseUser(supabaseUser: SupabaseUser, userData: Partial<DatabaseUser>): Promise<DatabaseUser | null> {
     try {
+      // Extraire le téléphone et l'email depuis user_metadata ou userData
+      const phone = userData.phone || supabaseUser.phone || supabaseUser.user_metadata?.phone;
+      const email = supabaseUser.email || userData.email;
+
+      // Générer un nom par défaut si non fourni
+      const defaultName = phone
+        ? `Utilisateur ${phone.slice(-4)}`
+        : email?.split('@')[0] || 'Utilisateur';
+
       const { data, error } = await supabase
         .from('users')
         .insert([{
           id: supabaseUser.id,
-          email: supabaseUser.email,
-          name: userData.name || supabaseUser.user_metadata?.name || supabaseUser.email?.split('@')[0],
+          email: email || null,
+          name: userData.name || supabaseUser.user_metadata?.name || defaultName,
           role: userData.role || 'merchant',
           status: 'active',
-          phone: userData.phone || supabaseUser.phone,
+          phone: phone,
           location: userData.location || '',
         }])
         .select()

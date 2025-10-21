@@ -465,7 +465,26 @@ export class SupabaseAuthService {
       case 'email_not_confirmed':
         return new AccountNotVerifiedError();
 
+      case 'email_provider_disabled':
+        return new AuthError(
+          'L\'authentification par email est désactivée. Veuillez utiliser Mobile Money ou WhatsApp.',
+          'EMAIL_PROVIDER_DISABLED'
+        );
+
+      case 'phone_provider_disabled':
+        return new AuthError(
+          'L\'authentification par téléphone n\'est pas configurée. Veuillez utiliser Mobile Money.',
+          'PHONE_PROVIDER_DISABLED'
+        );
+
+      case 'anonymous_provider_disabled':
+        return new AuthError(
+          'L\'authentification anonyme n\'est pas activée. Veuillez contacter l\'administrateur.',
+          'ANONYMOUS_PROVIDER_DISABLED'
+        );
+
       case 'too_many_requests':
+      case 'over_request_rate_limit':
         return new RateLimitError(60); // 60 secondes par défaut
 
       case 'user_not_found':

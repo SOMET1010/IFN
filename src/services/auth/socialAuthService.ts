@@ -193,65 +193,92 @@ export class SocialAuthService {
   }
 
   /**
-   * Créer un compte email temporaire pour l'utilisateur Mobile Money
-   * Permet de contourner les limitations OAuth
+   * Créer ou connecter un utilisateur Mobile Money avec authentification anonyme
+   * Cette méthode fonctionne même si l'authentification email est désactivée
    */
   private async createOrLoginMobileMoneyUser(
     phoneNumber: string,
     operator: string
   ): Promise<SocialAuthResult> {
     try {
-      // Créer un email temporaire basé sur le numéro
-      const email = `${phoneNumber.replace(/\+/g, '')}@mobilemoney.local`;
-      const password = this.generateSecurePassword(phoneNumber);
+      // Vérifier si l'utilisateur existe déjà avec ce numéro
+      const { data: existingProfile } = await supabase
+        .from('user_profiles')
+        .select('id, user_id')
+        .eq('phone', phoneNumber)
+        .maybeSingle();
 
-      // Tenter de se connecter d'abord
-      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-        email,
-        password
-      });
-
-      if (signInData?.user) {
-        return {
-          success: true,
-          userId: signInData.user.id,
-          email,
-          provider: `mobile_money_${operator}`
-        };
-      }
-
-      // Si la connexion échoue, créer un nouveau compte
-      if (signInError?.message.includes('Invalid login')) {
-        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-          email,
-          password,
+      if (existingProfile?.user_id) {
+        // Utilisateur existe, créer une session anonyme et la lier
+        const { data: anonData, error: anonError } = await supabase.auth.signInAnonymously({
           options: {
             data: {
               phone: phoneNumber,
               provider: `mobile_money_${operator}`,
-              auth_method: 'mobile_money'
+              auth_method: 'mobile_money',
+              linked_user_id: existingProfile.user_id
             }
           }
         });
 
-        if (signUpError) {
+        if (anonError || !anonData.user) {
           return {
             success: false,
-            error: signUpError.message
+            error: anonError?.message || 'Erreur lors de la connexion'
           };
         }
 
         return {
           success: true,
-          userId: signUpData.user?.id,
-          email,
+          userId: anonData.user.id,
           provider: `mobile_money_${operator}`
         };
       }
 
+      // Nouvel utilisateur, créer un compte anonyme
+      const { data: anonData, error: anonError } = await supabase.auth.signInAnonymously({
+        options: {
+          data: {
+            phone: phoneNumber,
+            provider: `mobile_money_${operator}`,
+            auth_method: 'mobile_money'
+          }
+        }
+      });
+
+      if (anonError || !anonData.user) {
+        return {
+          success: false,
+          error: anonError?.message || 'Erreur lors de la création du compte'
+        };
+      }
+
+      // Créer le profil utilisateur avec un email factice
+      const email = `${phoneNumber.replace(/[^0-9]/g, '')}@mobilemoney.local`;
+      const { error: profileError } = await supabase
+        .from('user_profiles')
+        .insert({
+          id: anonData.user.id,
+          user_id: anonData.user.id,
+          phone: phoneNumber,
+          email: email,
+          mobile_money_operator: operator,
+          mobile_money_verified: true,
+          primary_auth_method: 'mobile_money',
+          auth_methods_used: ['mobile_money'],
+          role: 'merchant'
+        });
+
+      if (profileError) {
+        console.error('Erreur création profil:', profileError);
+        // Ne pas bloquer si le profil existe déjà
+      }
+
       return {
-        success: false,
-        error: signInError?.message || 'Erreur inconnue'
+        success: true,
+        userId: anonData.user.id,
+        email,
+        provider: `mobile_money_${operator}`
       };
     } catch (error) {
       console.error('Erreur création utilisateur Mobile Money:', error);
