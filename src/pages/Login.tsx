@@ -231,19 +231,13 @@ export const Login = () => {
               </div>
 
               <Button
-                type="submit"
-                className="w-full h-12 rounded-lg font-medium transition-all hover:scale-[1.02]"
+                type="button"
                 variant="ivoire"
-                disabled={isLoading}
+                className="w-full h-12 justify-center space-x-2 rounded-lg font-medium transition-all hover:scale-[1.02]"
+                onClick={handleMobileMoney}
               >
-                {isLoading ? (
-                  <div className="flex items-center space-x-2">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current"></div>
-                    <span>Connexion en cours...</span>
-                  </div>
-                ) : (
-                  'Se connecter'
-                )}
+                <Smartphone className="h-5 w-5" />
+                <span>Connexion avec Mobile Money</span>
               </Button>
 
               <div className="relative py-6">
@@ -251,18 +245,27 @@ export const Login = () => {
                   <span className="w-full border-t border-border" />
                 </div>
                 <div className="relative flex justify-center text-sm">
-                  <span className="bg-card px-4 text-muted-foreground">OU</span>
+                  <span className="bg-card px-4 text-muted-foreground">Ou avec votre email</span>
                 </div>
               </div>
 
               <Button
-                type="button"
+                type="submit"
                 variant="outline"
-                className="w-full h-12 justify-center space-x-2 rounded-lg border-2 hover:bg-accent transition-all"
-                onClick={handleMobileMoney}
+                className="w-full h-12 rounded-lg border-2 hover:bg-accent transition-all"
+                disabled={isLoading}
               >
-                <Smartphone className="h-5 w-5" />
-                <span>Mobile Money</span>
+                {isLoading ? (
+                  <div className="flex items-center space-x-2">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current"></div>
+                    <span>Connexion...</span>
+                  </div>
+                ) : (
+                  <span className="flex items-center gap-2">
+                    <Mail className="h-4 w-4" />
+                    Se connecter avec Email
+                  </span>
+                )}
               </Button>
 
               <div className="text-center text-sm text-muted-foreground">
@@ -279,10 +282,19 @@ export const Login = () => {
           </CardContent>
         </Card>
 
-        {/* Liens rapides */}
-        <div className="text-center text-xs text-muted-foreground space-y-1">
-          <p>Comptes de démo : marchand1@example.com / password123</p>
-          <p>Utilisez vos identifiants de test ou créez un nouveau compte</p>
+        {/* Informations */}
+        <div className="text-center space-y-3">
+          <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+            <p className="text-sm font-medium text-green-800 mb-2">✅ Connexion la plus simple</p>
+            <p className="text-xs text-green-700">
+              Utilisez votre numéro Mobile Money (Orange, MTN, Moov)
+              <br />
+              Pas besoin d'email ou de mot de passe !
+            </p>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Démo : marchand1@example.com / password123
+          </p>
         </div>
       </div>
     </div>

@@ -6,11 +6,12 @@
 import { supabase } from '../supabase/supabaseClient';
 
 export interface SocialAuthProvider {
-  id: 'google' | 'facebook' | 'mobile_money';
+  id: 'google' | 'facebook' | 'mobile_money' | 'whatsapp';
   name: string;
   icon: string;
   enabled: boolean;
   requiresConfig: boolean;
+  description?: string;
 }
 
 export interface SocialAuthResult {
@@ -40,21 +41,32 @@ export class SocialAuthService {
       name: 'Mobile Money',
       icon: 'Smartphone',
       enabled: true,
-      requiresConfig: false
+      requiresConfig: false,
+      description: 'Méthode recommandée - Orange Money, MTN, Moov'
+    },
+    {
+      id: 'whatsapp',
+      name: 'WhatsApp',
+      icon: 'MessageCircle',
+      enabled: true,
+      requiresConfig: false,
+      description: 'Connexion avec votre numéro WhatsApp'
     },
     {
       id: 'google',
       name: 'Google',
       icon: 'Mail',
       enabled: false,
-      requiresConfig: true
+      requiresConfig: true,
+      description: 'Nécessite configuration OAuth'
     },
     {
       id: 'facebook',
       name: 'Facebook',
       icon: 'Facebook',
       enabled: false,
-      requiresConfig: true
+      requiresConfig: true,
+      description: 'Nécessite configuration OAuth'
     }
   ];
 
@@ -73,12 +85,12 @@ export class SocialAuthService {
   }
 
   /**
-   * Authentification via Mobile Money (Orange Money, MTN, Moov)
+   * Authentification via numéro de téléphone (Mobile Money ou WhatsApp)
    * Cette méthode fonctionne sans configuration Supabase
    */
   async authenticateWithMobileMoney(
     phoneNumber: string,
-    operator: 'orange' | 'mtn' | 'moov'
+    operator: 'orange' | 'mtn' | 'moov' | 'whatsapp'
   ): Promise<{ success: boolean; otpSent: boolean; sessionId: string; error?: string }> {
     try {
       // Validation du numéro de téléphone
@@ -262,23 +274,35 @@ export class SocialAuthService {
   }
 
   /**
-   * Lier un compte Mobile Money à un compte existant
+   * Lier un compte social à un compte existant
    */
-  async linkMobileMoneyToAccount(
+  async linkSocialAccountToUser(
     userId: string,
     phoneNumber: string,
-    operator: 'orange' | 'mtn' | 'moov'
+    provider: 'orange' | 'mtn' | 'moov' | 'whatsapp',
+    socialInfo?: { whatsappName?: string; googleEmail?: string }
   ): Promise<{ success: boolean; error?: string }> {
     try {
+      const updateData: any = {
+        id: userId,
+        phone: phoneNumber,
+        updated_at: new Date().toISOString()
+      };
+
+      if (provider === 'whatsapp') {
+        updateData.whatsapp_phone = phoneNumber;
+        updateData.whatsapp_verified = true;
+        if (socialInfo?.whatsappName) {
+          updateData.whatsapp_name = socialInfo.whatsappName;
+        }
+      } else {
+        updateData.mobile_money_operator = provider;
+        updateData.mobile_money_verified = true;
+      }
+
       const { error } = await supabase
         .from('user_profiles')
-        .upsert({
-          id: userId,
-          phone: phoneNumber,
-          mobile_money_operator: operator,
-          mobile_money_verified: true,
-          updated_at: new Date().toISOString()
-        });
+        .upsert(updateData);
 
       if (error) {
         return { success: false, error: error.message };
@@ -286,9 +310,20 @@ export class SocialAuthService {
 
       return { success: true };
     } catch (error) {
-      console.error('Erreur liaison Mobile Money:', error);
+      console.error('Erreur liaison compte social:', error);
       return { success: false, error: 'Erreur lors de la liaison du compte' };
     }
+  }
+
+  /**
+   * Lier un compte Mobile Money à un compte existant (legacy)
+   */
+  async linkMobileMoneyToAccount(
+    userId: string,
+    phoneNumber: string,
+    operator: 'orange' | 'mtn' | 'moov'
+  ): Promise<{ success: boolean; error?: string }> {
+    return this.linkSocialAccountToUser(userId, phoneNumber, operator);
   }
 
   /**
@@ -356,19 +391,20 @@ export class SocialAuthService {
         documentation: 'https://supabase.com/docs/guides/auth/social-login/auth-google'
       },
       {
-        title: 'Configuration Mobile Money',
+        title: 'Configuration Mobile Money & WhatsApp',
         provider: 'mobile_money',
         steps: [
-          '1. Mobile Money est déjà configuré et fonctionnel',
-          '2. Aucune configuration Supabase requise',
-          '3. En production, configurez les APIs SMS des opérateurs:',
-          '   - Orange Money API',
-          '   - MTN Mobile Money API',
-          '   - Moov Money API',
-          '4. Stockez les clés API dans les variables d\'environnement',
-          '5. Implémentez l\'envoi de SMS pour les OTP'
+          '1. Mobile Money et WhatsApp sont déjà configurés et fonctionnels',
+          '2. Aucune configuration Supabase OAuth requise',
+          '3. Les utilisateurs peuvent se connecter avec:',
+          '   - Orange Money (numéro + OTP)',
+          '   - MTN Mobile Money (numéro + OTP)',
+          '   - Moov Money (numéro + OTP)',
+          '   - WhatsApp (numéro + OTP)',
+          '4. En production, configurez les APIs SMS pour l\'envoi d\'OTP',
+          '5. Optionnel: Intégrez WhatsApp Business API pour notifications'
         ],
-        documentation: 'Documentation interne Mobile Money'
+        documentation: 'Documentation interne Mobile Money & WhatsApp'
       }
     ];
   }
