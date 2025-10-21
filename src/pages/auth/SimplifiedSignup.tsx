@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/services/supabase/supabaseClient';
 import {
   Store,
   Sprout,
@@ -48,12 +49,13 @@ const roleConfig = {
 
 export default function SimplifiedSignup() {
   const navigate = useNavigate();
-  const { signup, isLoading } = useAuth();
+  const { isLoading: authLoading } = useAuth();
   const { toast } = useToast();
 
   const [step, setStep] = useState<'role' | 'info'>('role');
   const [selectedRole, setSelectedRole] = useState<UserRole | null>(null);
   const [isListening, setIsListening] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
@@ -158,18 +160,85 @@ export default function SimplifiedSignup() {
       return;
     }
 
-    // Create account with minimal info
-    const result = await signup({
-      email: `${formData.phone.replace(/[^0-9]/g, '')}@temp.ivoire.ci`, // Temp email
-      password: Math.random().toString(36).slice(-12), // Auto-generated
-      name: formData.name,
-      role: selectedRole,
-      phone: formData.phone,
-      location: formData.location,
-      businessName: selectedRole !== 'producer' ? formData.name : undefined
-    });
+    setIsLoading(true);
 
-    if (result.success) {
+    try {
+      // Check if phone already exists
+      const { data: existingUser } = await supabase
+        .from('users')
+        .select('id')
+        .eq('phone', formData.phone)
+        .maybeSingle();
+
+      if (existingUser) {
+        toast({
+          title: "Numéro déjà utilisé",
+          description: "Ce numéro de téléphone est déjà enregistré. Veuillez vous connecter.",
+          variant: "destructive"
+        });
+        setIsLoading(false);
+        setTimeout(() => navigate('/login'), 2000);
+        return;
+      }
+
+      // Create anonymous auth session
+      const { data: authData, error: authError } = await supabase.auth.signInAnonymously({
+        options: {
+          data: {
+            phone: formData.phone,
+            name: formData.name,
+            role: selectedRole,
+            auth_method: 'phone'
+          }
+        }
+      });
+
+      if (authError || !authData.user) {
+        console.error('Auth error:', authError);
+        toast({
+          title: "Erreur d'inscription",
+          description: authError?.message || "Impossible de créer le compte. Veuillez réessayer.",
+          variant: "destructive"
+        });
+        setIsLoading(false);
+        return;
+      }
+
+      // Create user in database
+      const { error: userError } = await supabase
+        .from('users')
+        .insert({
+          id: authData.user.id,
+          name: formData.name,
+          phone: formData.phone,
+          location: formData.location,
+          role: selectedRole,
+          status: 'active',
+          email: null
+        });
+
+      if (userError) {
+        console.error('User creation error:', userError);
+        toast({
+          title: "Erreur de profil",
+          description: "Compte créé mais erreur lors de l'enregistrement du profil.",
+          variant: "destructive"
+        });
+        setIsLoading(false);
+        return;
+      }
+
+      // Create user profile
+      await supabase
+        .from('user_profiles')
+        .insert({
+          user_id: authData.user.id,
+          phone: formData.phone,
+          role: selectedRole,
+          primary_auth_method: 'phone',
+          auth_methods_used: ['phone']
+        });
+
       toast({
         title: "Bienvenue!",
         description: "Votre compte a été créé avec succès."
@@ -180,12 +249,15 @@ export default function SimplifiedSignup() {
       setTimeout(() => {
         navigate(`/${selectedRole}/dashboard`);
       }, 1500);
-    } else if (result.error) {
+    } catch (error) {
+      console.error('Signup error:', error);
       toast({
         title: "Erreur",
-        description: result.error.message,
+        description: "Une erreur inattendue est survenue. Veuillez réessayer.",
         variant: "destructive"
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 

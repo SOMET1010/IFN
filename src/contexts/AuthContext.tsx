@@ -59,14 +59,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const { data: { session } } = await supabase.auth.getSession();
 
         if (session?.user) {
-          const currentUser = await SupabaseAuthService.getCurrentUser();
-          if (currentUser) {
-            setState(prev => ({
-              ...prev,
-              user: currentUser,
-              isLoading: false,
-            }));
+          // Check if user exists in database
+          const { data: dbUser } = await supabase
+            .from('users')
+            .select('*')
+            .eq('id', session.user.id)
+            .maybeSingle();
+
+          if (dbUser) {
+            const currentUser = await SupabaseAuthService.getCurrentUser();
+            if (currentUser) {
+              setState(prev => ({
+                ...prev,
+                user: currentUser,
+                isLoading: false,
+              }));
+            } else {
+              setState(prev => ({
+                ...prev,
+                user: null,
+                isLoading: false,
+                requiresProfile: true,
+              }));
+            }
           } else {
+            // Anonymous user without database record
             setState(prev => ({
               ...prev,
               user: null,
