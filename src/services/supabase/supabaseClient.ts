@@ -81,10 +81,15 @@ export const authHelpers = {
         .from('users')
         .select('*')
         .eq('id', supabaseUser.id)
-        .single();
+        .maybeSingle();
 
-      if (error || !data) {
+      if (error) {
         console.error('Erreur lors de la récupération de l\'utilisateur:', error);
+        return null;
+      }
+
+      if (!data) {
+        console.log('Aucun utilisateur trouvé dans la base de données pour:', supabaseUser.id);
         return null;
       }
 
@@ -119,10 +124,15 @@ export const authHelpers = {
           location: userData.location || '',
         }])
         .select()
-        .single();
+        .maybeSingle();
 
       if (error) {
         console.error('Erreur lors de la création de l\'utilisateur:', error);
+        return null;
+      }
+
+      if (!data) {
+        console.error('Aucune donnée retournée après la création de l\'utilisateur');
         return null;
       }
 

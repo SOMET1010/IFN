@@ -253,12 +253,40 @@ export class SocialAuthService {
         };
       }
 
-      // Créer le profil utilisateur avec un email factice
+      // Créer l'entrée dans la table users d'abord
       const email = `${phoneNumber.replace(/[^0-9]/g, '')}@mobilemoney.local`;
+      const userName = `User ${phoneNumber.slice(-4)}`;
+
+      const { error: userError } = await supabase
+        .from('users')
+        .insert({
+          id: anonData.user.id,
+          email: email,
+          name: userName,
+          role: 'merchant',
+          status: 'active',
+          phone: phoneNumber,
+          mobile_money_operator: operator,
+          mobile_money_verified: true,
+          primary_auth_method: 'mobile_money',
+          auth_methods_used: ['mobile_money']
+        });
+
+      if (userError) {
+        console.error('Erreur création user:', userError);
+        // Si l'utilisateur existe déjà, continuer
+        if (!userError.message.includes('duplicate') && !userError.message.includes('already exists')) {
+          return {
+            success: false,
+            error: 'Erreur lors de la création du compte utilisateur'
+          };
+        }
+      }
+
+      // Créer le profil utilisateur
       const { error: profileError } = await supabase
         .from('user_profiles')
         .insert({
-          id: anonData.user.id,
           user_id: anonData.user.id,
           phone: phoneNumber,
           email: email,
@@ -266,12 +294,20 @@ export class SocialAuthService {
           mobile_money_verified: true,
           primary_auth_method: 'mobile_money',
           auth_methods_used: ['mobile_money'],
-          role: 'merchant'
+          profile_complete: false
         });
 
       if (profileError) {
         console.error('Erreur création profil:', profileError);
         // Ne pas bloquer si le profil existe déjà
+        if (!profileError.message.includes('duplicate') && !profileError.message.includes('already exists')) {
+          // Tenter de supprimer l'utilisateur créé
+          await supabase.from('users').delete().eq('id', anonData.user.id);
+          return {
+            success: false,
+            error: 'Erreur lors de la création du profil utilisateur'
+          };
+        }
       }
 
       return {
